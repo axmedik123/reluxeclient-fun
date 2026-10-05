@@ -92,6 +92,7 @@ const S={
   promos:store.get('reluxe_promos',[]),
   pendingFreeze:store.get('reluxe_pending_freeze',null),
   usedKeys:store.get('reluxe_used_keys',[]),
+  users:store.get('reluxe_users',{}),
 };
 const DEMO_KEYS={
   'RELUXE-WELCOME-7D':{days:7},
@@ -105,6 +106,7 @@ const save=()=>{
   store.set('reluxe_sub_expires',S.subExp); store.set('reluxe_freeze_until',S.freezeUntil);
   store.set('reluxe_next_reward',S.nextReward); store.set('reluxe_promos',S.promos);
   store.set('reluxe_pending_freeze',S.pendingFreeze); store.set('reluxe_used_keys',S.usedKeys);
+  store.set('reluxe_users',S.users||{});
 };
 let authMode='login';
 
@@ -160,10 +162,22 @@ $('auth-form').onsubmit=e=>{
     notify('С возвращением, создатель');
     return;
   }
-  S.reg=true; S.user=u; save();
-  $('username').value=''; $('password').value='';
-  closeAuth(); refresh();
-  notify(authMode==='login'?'С возвращением, '+u:'Аккаунт создан: '+u);
+  const users=S.users||{};
+  const key=u.toLowerCase();
+  if(authMode==='register'){
+    if(users[key]){notify('Такой ник уже занят',true);return;}
+    users[key]=p; S.users=users; S.reg=true; S.user=u; save();
+    $('username').value=''; $('password').value='';
+    closeAuth(); refresh();
+    notify('Аккаунт создан: '+u);
+  }else{
+    if(!users[key]){notify('Аккаунт не найден — зарегистрируйся',true);return;}
+    if(users[key]!==p){notify('Неверный пароль',true);return;}
+    S.reg=true; S.user=u; save();
+    $('username').value=''; $('password').value='';
+    closeAuth(); refresh();
+    notify('С возвращением, '+u);
+  }
 };
 
 /* ============ 5. ПОДПИСКА + ЗАМОРОЗКА ============ */
