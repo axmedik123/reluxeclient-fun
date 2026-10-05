@@ -56,12 +56,12 @@
       </div>
       <div class="stats-row">
         <div class="stat-item">
-          <span class="count">0</span>
+          <span class="count" id="users-count">0</span>
           <span class="count-label">Пользователей</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="count">0</span>
+          <span class="count" id="updates-count">0</span>
           <span class="count-label">Обновлений</span>
         </div>
       </div>
@@ -162,6 +162,7 @@
         </div>
         <div class="profile-info">
           <h3 id="profile-username">Гость</h3>
+          <p class="sub-expiry" id="profile-email"></p>
           <p class="subscription-status" id="sub-status">Подписка: не активна</p>
           <p class="sub-expiry" id="sub-expiry"></p>
           <p class="sub-expiry freeze-line hidden" id="freeze-line"></p>
@@ -238,6 +239,14 @@
               <button class="btn btn-primary" id="activate-key">Активировать</button>
             </div>
             <p class="muted small">Рабочий ключ сразу прибавляет подписку. Один ключ — одна активация.</p>
+            <div class="move-box">
+              <button class="btn btn-secondary" id="move-btn">Смена браузера</button>
+              <p class="muted small">Уходишь на другой браузер? Нажми — получишь ключ с остатком своей подписки. Вставь его во вкладке «Ключи» на новом месте — дни перенесутся туда.</p>
+              <div id="move-result" class="promo-row hidden">
+                <code id="move-code"></code>
+                <button id="move-copy">Копировать</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -279,6 +288,10 @@
       <button class="auth-tab" data-mode="register">Регистрация</button>
     </div>
     <form id="auth-form">
+      <div class="form-group" id="fg-email">
+        <label for="email">Почта</label>
+        <input type="email" id="email" placeholder="Введи почту" autocomplete="off">
+      </div>
       <div class="form-group">
         <label for="username">Ник</label>
         <input type="text" id="username" placeholder="Введи ник" required autocomplete="off">
@@ -287,8 +300,13 @@
         <label for="password">Пароль</label>
         <input type="password" id="password" placeholder="Введи пароль" required autocomplete="off">
       </div>
+      <div class="form-group hidden" id="fg-repeat">
+        <label for="pass2">Повтори пароль</label>
+        <input type="password" id="pass2" placeholder="Повтори пароль" autocomplete="off">
+      </div>
       <button type="submit" class="btn btn-primary btn-full" id="auth-submit">Войти</button>
     </form>
+    <p class="modal-note">Одна почта — один аккаунт. Developer входит без почты.</p>
     <p class="modal-note">Данные хранятся только в твоём браузере.</p>
   </div>
 </div>
