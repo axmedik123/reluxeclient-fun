@@ -98,6 +98,8 @@ const DEMO_KEYS={
   'RELUXE-VIP-30D':{days:30},
   'RELUXE-GIFT-1D':{days:1},
 };
+const CREATOR_NICK='developer';
+const CREATOR_PASS='ReluxeOwner2026';
 const save=()=>{
   store.set('reluxe_registered',S.reg); store.set('reluxe_username',S.user);
   store.set('reluxe_sub_expires',S.subExp); store.set('reluxe_freeze_until',S.freezeUntil);
@@ -150,7 +152,14 @@ $('auth-form').onsubmit=e=>{
   const u=$('username').value.trim(), p=$('password').value;
   if(!u||!p) return;
   if(u.length<6){notify('Ник должен быть минимум 6 символов',true);return;}
-  if(u.toLowerCase()==='developer'){notify('Данный аккаунт принадлежит создателю, войти нельзя',true);return;}
+  if(u.toLowerCase()===CREATOR_NICK){
+    if(p!==CREATOR_PASS){notify('Данный аккаунт принадлежит создателю, войти нельзя',true);return;}
+    S.reg=true; S.user='Developer'; save();
+    $('username').value=''; $('password').value='';
+    closeAuth(); refresh();
+    notify('С возвращением, создатель');
+    return;
+  }
   S.reg=true; S.user=u; save();
   $('username').value=''; $('password').value='';
   closeAuth(); refresh();
