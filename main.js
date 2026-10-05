@@ -311,20 +311,7 @@ function renderFreezeBox(){
   box.classList.toggle('hidden',!S.pendingFreeze);
   if(S.pendingFreeze) $('freeze-btn').textContent='Включить заморозку на '+pluralDays(S.pendingFreeze);
 }
-async function loadStats(){
-  try{
-    const cache=store.get('reluxe_stats',{t:0,c:0});
-    if(cache.c&&Date.now()-cache.t<3600e3){setUpdates(cache.c);return;}
-    const r=await fetch('https://api.github.com/repos/axmedik123/reluxeclient-fun/commits?per_page=1');
-    if(!r.ok) return;
-    const link=r.headers.get('Link')||'';
-    const m=/page=(\d+)>; rel="last"/.exec(link);
-    const c=m?parseInt(m[1],10):1;
-    store.set('reluxe_stats',{t:Date.now(),c}); setUpdates(c);
-  }catch(e){}
-}
-function setUpdates(n){const el=$('updates-count');if(el)el.textContent=n;}
-loadStats();
+/* счётчик обновлений — только про клиент, станет живым с backend */
 function resetCards(){
   document.querySelectorAll('.flip-card').forEach(card=>{
     card.classList.remove('flipped','disabled','dim');
@@ -416,9 +403,10 @@ $('move-btn').onclick=()=>{
   const abc='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s='';
   for(let i=0;i<4;i++)s+=abc[Math.floor(Math.random()*abc.length)];
   const code='RELUXE-MOVE-'+days+'D-'+s;
+  S.subExp=null; save(); refreshSub();
   $('move-code').textContent=code;
   $('move-result').classList.remove('hidden');
-  notify('Ключ переноса создан: '+pluralDays(days));
+  notify('Перенос создан: '+pluralDays(days)+' сняты с этого браузера. Активируй ключ на новом месте — один раз.');
 };
 $('move-copy').onclick=()=>{
   const c=$('move-code').textContent||'';
