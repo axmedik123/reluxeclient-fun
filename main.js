@@ -99,7 +99,7 @@ const DEMO_KEYS={
   'RELUXE-GIFT-1D':{days:1},
 };
 const CREATOR_NICK='developer';
-const CREATOR_PASS='ReluxeOwner2026';
+const CREATOR_PASS='11223344';
 const save=()=>{
   store.set('reluxe_registered',S.reg); store.set('reluxe_username',S.user);
   store.set('reluxe_sub_expires',S.subExp); store.set('reluxe_freeze_until',S.freezeUntil);
