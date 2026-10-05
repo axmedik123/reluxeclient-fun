@@ -91,12 +91,18 @@ const S={
   nextReward:store.get('reluxe_next_reward',0),
   promos:store.get('reluxe_promos',[]),
   pendingFreeze:store.get('reluxe_pending_freeze',null),
+  usedKeys:store.get('reluxe_used_keys',[]),
+};
+const DEMO_KEYS={
+  'RELUXE-WELCOME-7D':{days:7},
+  'RELUXE-VIP-30D':{days:30},
+  'RELUXE-GIFT-1D':{days:1},
 };
 const save=()=>{
   store.set('reluxe_registered',S.reg); store.set('reluxe_username',S.user);
   store.set('reluxe_sub_expires',S.subExp); store.set('reluxe_freeze_until',S.freezeUntil);
   store.set('reluxe_next_reward',S.nextReward); store.set('reluxe_promos',S.promos);
-  store.set('reluxe_pending_freeze',S.pendingFreeze);
+  store.set('reluxe_pending_freeze',S.pendingFreeze); store.set('reluxe_used_keys',S.usedKeys);
 };
 let authMode='login';
 
@@ -119,9 +125,7 @@ document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>setView(b.data
 
 function switchTab(t){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  $('rewards').classList.toggle('hidden',t!=='rewards');
-  $('rewards').classList.toggle('active',t==='rewards');
-  $('promocodes').classList.toggle('hidden',t!=='promocodes');
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('hidden',p.id!==t));
 }
 document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 
@@ -145,6 +149,8 @@ $('auth-form').onsubmit=e=>{
   e.preventDefault();
   const u=$('username').value.trim(), p=$('password').value;
   if(!u||!p) return;
+  if(u.length<6){notify('Ник должен быть минимум 6 символов',true);return;}
+  if(u.toLowerCase()==='developer'){notify('Данный аккаунт принадлежит создателю, войти нельзя',true);return;}
   S.reg=true; S.user=u; save();
   $('username').value=''; $('password').value='';
   closeAuth(); refresh();
@@ -205,28 +211,33 @@ setInterval(()=>{
 /* ============ 6. ПРОДУКТЫ ============ */
 document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{
   if(!S.reg){notify('Сначала зарегайся',true);openAuth();return;}
-  const k=b.dataset.buy;
-  if(k==='7d'){addSub(7*864e5);notify('Подписка на 7 дней активирована (демо)');}
-  else if(k==='30d'){addSub(30*864e5);notify('Подписка на 30 дней активирована (демо)');}
-  else if(k==='life'){addSub(365*100*864e5);notify('LifeTime активирован (демо)');}
-  else if(k==='hwid'){notify('HWID сброшен (демо, 10 руб)');}
-  setView('profile');
+  window.open('https://t.me/chapmanclient1','_blank');
 });
 
 /* ============ 7. НАГРАДЫ — закрытые переворачивающиеся карточки ============ */
 // пул: подписка пишется просто "Подписка", промокод генерится ReluxeXX, заморозка на 1 день
 const POOL=[
-  {id:'sub1', title:'Подписка', desc:'Подписка на 1 день — выдана моментально', days:1},
-  {id:'sub2', title:'Подписка', desc:'Подписка на 2 дня — выдана моментально', days:2},
-  {id:'promo5', title:'Промокод −5%', desc:'Промокод на скидку 5%', promo:true},
-  {id:'freeze1', title:'Заморозка', desc:'Заморозка подписки на 1 день', freezeDays:1},
-  {id:'sub12h', title:'Подписка', desc:'Подписка на 12 часов — выдана моментально', hours:12},
+  {id:'sub1', w:28, title:'Подписка', desc:'Подписка на 1 день — выдана моментально', days:1},
+  {id:'sub2', w:18, title:'Подписка', desc:'Подписка на 2 дня — выдана моментально', days:2},
+  {id:'sub12h', w:14, title:'Подписка', desc:'Подписка на 12 часов — выдана моментально', hours:12},
+  {id:'promo5', w:14, title:'Промокод −5%', desc:'Промокод на скидку 5%', promo:5},
+  {id:'freeze1', w:10, title:'Заморозка', desc:'Заморозка подписки на 1 день', freezeDays:1},
+  {id:'sub7', w:5, title:'Подписка', desc:'Подписка на 7 дней — выдана моментально', days:7},
+  {id:'promo10', w:5, title:'Промокод −10%', desc:'Промокод на скидку 10%', promo:10},
+  {id:'freeze3', w:4, title:'Заморозка', desc:'Заморозка подписки на 3 дня', freezeDays:3},
 ];
-function genPromo(){
+function pickReward(){
+  const total=POOL.reduce((a,r)=>a+r.w,0);
+  let x=Math.random()*total;
+  for(const r of POOL){ if((x-=r.w)<0) return r; }
+  return POOL[0];
+}
+function genPromo(disc){
   const abc='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s='';
   for(let i=0;i<2;i++)s+=abc[Math.floor(Math.random()*abc.length)];
-  return 'Reluxe'+s;
+  return disc===10?('Reluxe10-'+s):('Reluxe'+s);
 }
+function pluralDays(n){ return n+' '+(n===1?'день':(n<5?'дня':'дней')); }
 function canOpen(){ return Date.now()>=(S.nextReward||0); }
 function renderCooldown(){
   const pill=$('cooldown-pill');
@@ -249,7 +260,9 @@ function renderPromos(){
   });
 }
 function renderFreezeBox(){
-  $('freeze-box').classList.toggle('hidden',!S.pendingFreeze);
+  const box=$('freeze-box');
+  box.classList.toggle('hidden',!S.pendingFreeze);
+  if(S.pendingFreeze) $('freeze-btn').textContent='Включить заморозку на '+pluralDays(S.pendingFreeze);
 }
 function resetCards(){
   document.querySelectorAll('.flip-card').forEach(card=>{
@@ -267,7 +280,7 @@ document.querySelectorAll('.flip-card').forEach(card=>{
     if(!canOpen()){notify('Награды доступны раз в 2 дня',true);return;}
     if(card.classList.contains('flipped'))return;
     // рандомная награда
-    const rw=POOL[Math.floor(Math.random()*POOL.length)];
+    const rw=pickReward();
     // переворачиваем выбранную, остальные димим
     document.querySelectorAll('.flip-card').forEach(c=>{
       c.classList.add('disabled'); if(c!==card)c.classList.add('dim');
@@ -282,14 +295,14 @@ document.querySelectorAll('.flip-card').forEach(card=>{
     if(rw.days){addSub(rw.days*864e5);msg=`Выпала подписка на ${rw.days===1?'1 день':'2 дня'} — уже на аккаунте`;}
     else if(rw.hours){addSub(rw.hours*36e5);msg='Выпала подписка на 12 часов — уже на аккаунте';}
     else if(rw.promo){
-      const code=genPromo();
-      S.promos.push(code); msg='Выпал промокод на −5%: '+code;
+      const code=genPromo(rw.promo);
+      S.promos.push(code); msg='Выпал промокод на −'+rw.promo+'%: '+code+'. Покажи его при оплате в Telegram';
       const d=document.createElement('div');d.className='rb-code';d.textContent=code;
       card.querySelector('.flip-back').append(d);
       renderPromos(); switchTab('rewards');
     }
     else if(rw.freezeDays){
-      S.pendingFreeze=rw.freezeDays; msg='Выпала заморозка на 1 день — нажми кнопку ниже, чтобы включить';
+      S.pendingFreeze=rw.freezeDays; msg='Выпала заморозка на '+pluralDays(rw.freezeDays)+' — нажми кнопку ниже, чтобы включить';
     }
     save(); renderCooldown(); renderFreezeBox();
     const res=$('reward-result');
@@ -300,15 +313,30 @@ document.querySelectorAll('.flip-card').forEach(card=>{
   };
 });
 
-/* ============ 8. ПРОМОКОДЫ ============ */
+/* ============ 8. ПРОМОКОДЫ И КЛЮЧИ ============ */
 $('activate-promo').onclick=()=>{
   const v=($('promo-input').value||'').trim();
   if(!v)return;
   if(v.toLowerCase()==='rel'){addSub(6e4);$('promo-input').value='';notify('Вы активировали подписку и её срок: 1 минута');return;}
   // свои сгенерированные вида ReluxeXX — скидка 5%
   const found=S.promos.find(p=>p.toLowerCase()===v.toLowerCase());
-  if(found){$('promo-input').value='';notify('Промокод '+found+' применён: скидка 5% (демо)');return;}
+  if(found){
+    $('promo-input').value='';
+    const disc=/^reluxe10-/i.test(found)?10:5;
+    notify('Промокод '+found+' применён: скидка '+disc+'%. Покажи его при оплате в Telegram');
+    return;
+  }
   notify('Неверный промокод',true);
+};
+$('activate-key').onclick=()=>{
+  const k=(($('key-input').value||'').trim().toUpperCase());
+  if(!k) return;
+  if(!S.reg){notify('Сначала зарегайся',true);openAuth();return;}
+  const d=DEMO_KEYS[k];
+  if(!d){notify('Неверный ключ',true);return;}
+  if(S.usedKeys.includes(k)){notify('Ключ уже активирован',true);return;}
+  S.usedKeys.push(k); addSub(d.days*864e5); $('key-input').value=''; save();
+  notify('Ключ активирован: +'+pluralDays(d.days)+' подписки');
 };
 
 /* ============ 9. ОБНОВЛЕНИЕ UI ============ */
