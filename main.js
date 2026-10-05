@@ -92,7 +92,8 @@ const S={
   promos:store.get('reluxe_promos',[]),
   pendingFreeze:store.get('reluxe_pending_freeze',null),
   usedKeys:store.get('reluxe_used_keys',[]),
-  users:store.get('reluxe_users',{}),
+  users:store.get('reluxe_users_v2',{}),
+  email:store.get('reluxe_email',''),
 };
 const DEMO_KEYS={
   'RELUXE-WELCOME-7D':{days:7},
@@ -106,7 +107,7 @@ const save=()=>{
   store.set('reluxe_sub_expires',S.subExp); store.set('reluxe_freeze_until',S.freezeUntil);
   store.set('reluxe_next_reward',S.nextReward); store.set('reluxe_promos',S.promos);
   store.set('reluxe_pending_freeze',S.pendingFreeze); store.set('reluxe_used_keys',S.usedKeys);
-  store.set('reluxe_users',S.users||{});
+  store.set('reluxe_users_v2',S.users||{}); store.set('reluxe_email',S.email||'');
 };
 let authMode='login';
 
@@ -149,34 +150,56 @@ document.querySelectorAll('.auth-tab').forEach(t=>t.onclick=()=>{
   $('auth-title').textContent=authMode==='login'?'Вход':'Регистрация';
   $('auth-submit').textContent=authMode==='login'?'Войти':'Создать аккаунт';
 });
+function hashStr(s){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const ch=s.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(16);}
+function validEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
+function loginWait(){const f=store.get('reluxe_fails',{c:0,u:0});return f.u>Date.now()?Math.ceil((f.u-Date.now())/1000):0;}
+function loginFail(){
+  const f=store.get('reluxe_fails',{c:0,u:0}); f.c++;
+  if(f.c>=5){f.u=Date.now()+60000;f.c=0;store.set('reluxe_fails',f);return true;}
+  store.set('reluxe_fails',f); return false;
+}
+function loginOk(){store.set('reluxe_fails',{c:0,u:0});}
+
 $('auth-form').onsubmit=e=>{
   e.preventDefault();
+  const wait=loginWait();
+  if(wait>0){notify('Слишком много попыток. Подожди '+wait+' с',true);return;}
   const u=$('username').value.trim(), p=$('password').value;
+  const em=(($('email').value||'').trim().toLowerCase());
+  const p2=$('pass2').value;
   if(!u||!p) return;
   if(u.length<6){notify('Ник должен быть минимум 6 символов',true);return;}
+  if(p.length<6){notify('Пароль должен быть минимум 6 символов',true);return;}
   if(u.toLowerCase()===CREATOR_NICK){
-    if(p!==CREATOR_PASS){notify('Данный аккаунт принадлежит создателю, войти нельзя',true);return;}
-    S.reg=true; S.user='Developer'; save();
-    $('username').value=''; $('password').value='';
+    if(p!==CREATOR_PASS){ if(loginFail())notify('Слишком много попыток. Подожди минуту',true); else notify('Данный аккаунт принадлежит создателю, войти нельзя',true); return; }
+    loginOk();
+    S.reg=true; S.user='Developer'; S.email=''; save();
+    $('username').value=''; $('password').value=''; $('email').value=''; $('pass2').value='';
     closeAuth(); refresh();
     notify('С возвращением, создатель');
     return;
   }
+  if(!validEmail(em)){notify('Введи правильную почту',true);return;}
   const users=S.users||{};
-  const key=u.toLowerCase();
   if(authMode==='register'){
-    if(users[key]){notify('Такой ник уже занят',true);return;}
-    users[key]=p; S.users=users; S.reg=true; S.user=u; save();
-    $('username').value=''; $('password').value='';
+    if(p2!==p){notify('Пароли не совпадают',true);return;}
+    if(users[em]){notify('С этой почты уже зарегистрирован аккаунт — только войти',true);return;}
+    const nickTaken=Object.keys(users).some(k=>users[k].nick.toLowerCase()===u.toLowerCase());
+    if(nickTaken){notify('Такой ник уже занят',true);return;}
+    users[em]={nick:u,salt:em,hash:hashStr(em+'|'+p)}; S.users=users;
+    loginOk(); S.reg=true; S.user=u; S.email=em; save();
+    $('username').value=''; $('password').value=''; $('email').value=''; $('pass2').value='';
     closeAuth(); refresh();
     notify('Аккаунт создан: '+u);
   }else{
-    if(!users[key]){notify('Аккаунт не найден — зарегистрируйся',true);return;}
-    if(users[key]!==p){notify('Неверный пароль',true);return;}
-    S.reg=true; S.user=u; save();
-    $('username').value=''; $('password').value='';
+    if(!users[em]){notify('Аккаунт не найден — зарегистрируйся',true);return;}
+    const acc=users[em];
+    if(acc.nick.toLowerCase()!==u.toLowerCase()){ if(loginFail())notify('Слишком много попыток. Подожди минуту',true); else notify('Ник не совпадает с этой почтой',true); return; }
+    if(acc.hash!==hashStr(acc.salt+'|'+p)){ if(loginFail())notify('Слишком много попыток. Подожди минуту',true); else notify('Неверный пароль',true); return; }
+    loginOk(); S.reg=true; S.user=acc.nick; S.email=em; save();
+    $('username').value=''; $('password').value=''; $('email').value=''; $('pass2').value='';
     closeAuth(); refresh();
-    notify('С возвращением, '+u);
+    notify('С возвращением, '+acc.nick);
   }
 };
 
@@ -215,6 +238,7 @@ function refreshSub(){
   }
   $('profile-username').textContent=S.user||'Гость';
   const al=$('avatar-letter'); if(al) al.textContent=((S.user||'R')[0]||'R').toUpperCase();
+  const pe=$('profile-email'); if(pe) pe.textContent=S.user==='Developer'?'Аккаунт создателя':(S.email||'');
 }
 $('unfreeze-btn').onclick=()=>{ // отморозить
   S.freezeUntil=null; save(); refreshSub(); notify('Подписка разморожена');
@@ -287,6 +311,20 @@ function renderFreezeBox(){
   box.classList.toggle('hidden',!S.pendingFreeze);
   if(S.pendingFreeze) $('freeze-btn').textContent='Включить заморозку на '+pluralDays(S.pendingFreeze);
 }
+async function loadStats(){
+  try{
+    const cache=store.get('reluxe_stats',{t:0,c:0});
+    if(cache.c&&Date.now()-cache.t<3600e3){setUpdates(cache.c);return;}
+    const r=await fetch('https://api.github.com/repos/axmedik123/reluxeclient-fun/commits?per_page=1');
+    if(!r.ok) return;
+    const link=r.headers.get('Link')||'';
+    const m=/page=(\d+)>; rel="last"/.exec(link);
+    const c=m?parseInt(m[1],10):1;
+    store.set('reluxe_stats',{t:Date.now(),c}); setUpdates(c);
+  }catch(e){}
+}
+function setUpdates(n){const el=$('updates-count');if(el)el.textContent=n;}
+loadStats();
 function resetCards(){
   document.querySelectorAll('.flip-card').forEach(card=>{
     card.classList.remove('flipped','disabled','dim');
@@ -356,11 +394,41 @@ $('activate-key').onclick=()=>{
   if(!k) return;
   if(!S.reg){notify('Сначала зарегайся',true);openAuth();return;}
   const d=DEMO_KEYS[k];
-  if(!d){notify('Неверный ключ',true);return;}
+  if(!d){
+    const mv=/^RELUXE-MOVE-(\d{1,4})D-[A-Z0-9]{4}$/.exec(k);
+    if(!mv){notify('Неверный ключ',true);return;}
+    const md=parseInt(mv[1],10);
+    if(!(md>=1&&md<=3650)){notify('Неверный ключ',true);return;}
+    if(S.usedKeys.includes(k)){notify('Ключ уже активирован',true);return;}
+    S.usedKeys.push(k); addSub(md*864e5); $('key-input').value=''; save();
+    notify('Перенос выполнен: +'+pluralDays(md)+' подписки');
+    return;
+  }
   if(S.usedKeys.includes(k)){notify('Ключ уже активирован',true);return;}
   S.usedKeys.push(k); addSub(d.days*864e5); $('key-input').value=''; save();
   notify('Ключ активирован: +'+pluralDays(d.days)+' подписки');
 };
+$('move-btn').onclick=()=>{
+  if(!S.reg){notify('Сначала зарегайся',true);openAuth();return;}
+  const now=Date.now();
+  if(!(S.subExp&&S.subExp>now)){notify('Нет активной подписки для переноса',true);return;}
+  const days=Math.max(1,Math.ceil((S.subExp-now)/864e5));
+  const abc='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s='';
+  for(let i=0;i<4;i++)s+=abc[Math.floor(Math.random()*abc.length)];
+  const code='RELUXE-MOVE-'+days+'D-'+s;
+  $('move-code').textContent=code;
+  $('move-result').classList.remove('hidden');
+  notify('Ключ переноса создан: '+pluralDays(days));
+};
+$('move-copy').onclick=()=>{
+  const c=$('move-code').textContent||'';
+  if(!c) return;
+  if(navigator.clipboard) navigator.clipboard.writeText(c);
+  notify('Скопировано: '+c);
+};
+document.querySelectorAll('.auth-tab').forEach(t=>t.addEventListener('click',()=>{
+  $('fg-repeat').classList.toggle('hidden',t.dataset.mode!=='register');
+}));
 
 /* ============ 9. ОБНОВЛЕНИЕ UI ============ */
 function refresh(){
