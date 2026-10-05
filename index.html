@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReluxeClient — Твой собственный клиент</title>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="grid-overlay"></div>
+<div class="overlay"></div>
+
+<header class="header">
+  <div class="logo" data-goto="home">
+    <span class="logo-dot"></span>
+    <span class="logo-text">ReluxeClient</span>
+    <span class="logo-tag">FUN</span>
+  </div>
+  <nav class="nav">
+    <div class="nav-links">
+      <button class="nav-link active" data-view="home">Главная</button>
+      <button class="nav-link" data-view="products">Продукты</button>
+      <button class="nav-link" data-view="profile">Профиль</button>
+      <button class="nav-link" data-view="launcher">Лаунчер</button>
+    </div>
+    <button class="btn btn-primary" id="auth-btn">Войти</button>
+    <button class="btn btn-ghost hidden" id="user-chip">Профиль</button>
+  </nav>
+</header>
+
+<main class="main">
+<div class="container">
+
+  <!-- HOME -->
+  <section id="home-view" class="view">
+    <section class="hero">
+      <div class="hero-badge fade-in"><span class="pulse"></span> reluxeclient.fun • v2.0</div>
+      <h1 class="hero-title fade-in">Твой собственный клиент</h1>
+      <p class="hero-subtitle fade-in delay-1">Настрой его под себя</p>
+      <h2 class="hero-brand fade-in delay-2">ReluxeClient</h2>
+      <div class="hero-cta fade-in delay-3">
+        <button class="btn btn-primary btn-lg" data-goto="products">Смотреть продукты</button>
+        <button class="btn btn-secondary btn-lg" data-goto="profile">Открыть профиль</button>
+      </div>
+    </section>
+
+    <section class="card stats-card fade-in delay-3">
+      <div class="card-head">
+        <h3 class="card-title">Главная страница обновлений</h3>
+        <span class="live"><span class="pulse green"></span> online</span>
+      </div>
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="count">0</span>
+          <span class="count-label">Пользователей</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="count">0</span>
+          <span class="count-label">Обновлений</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="feature-card">
+        <div class="feature-icon">01</div>
+        <h4>Кастомизация</h4>
+        <p>Модули, темы и интерфейс под твой стиль игры.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">02</div>
+        <h4>Стабильность</h4>
+        <p>Оптимизация FPS и плавная работа на слабых ПК.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">03</div>
+        <h4>Обновления</h4>
+        <p>Новые функции прилетают вместе с обновлениями лаунчера.</p>
+      </div>
+    </section>
+
+    <section class="gate" id="gate-section">
+      <div class="card warning-card">
+        <h3>Функционал ограничен</h3>
+        <p class="gate-text">Сначала зарегайся</p>
+        <p class="gate-subtext">Пока ты не зарегистрирован — нельзя ничего купить или активировать</p>
+        <button class="btn btn-primary" id="gate-btn">Зарегистрироваться</button>
+      </div>
+    </section>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section id="products-view" class="view hidden">
+    <div class="page-head">
+      <h2>Продукты</h2>
+      <p>Выбери подписку под себя. Оплата — демо, ничего не списывается.</p>
+    </div>
+    <div class="products-grid">
+      <div class="product-item">
+        <div class="product-top"><span class="product-badge">Старт</span></div>
+        <h4>Подписка · 7 дней</h4>
+        <div class="price">50 <span>руб</span></div>
+        <ul class="plist">
+          <li>Полный доступ к клиенту</li>
+          <li>Все модули</li>
+          <li>Поддержка</li>
+        </ul>
+        <button class="btn btn-buy" data-buy="7d">Купить</button>
+      </div>
+      <div class="product-item hot">
+        <div class="product-top"><span class="product-badge hot-b">Хит</span></div>
+        <h4>Подписка · 30 дней</h4>
+        <div class="price">100 <span>руб</span></div>
+        <ul class="plist">
+          <li>Полный доступ к клиенту</li>
+          <li>Приоритетные обновления</li>
+          <li>Поддержка 24/7</li>
+        </ul>
+        <button class="btn btn-buy" data-buy="30d">Купить</button>
+      </div>
+      <div class="product-item">
+        <div class="product-top"><span class="product-badge">Навсегда</span></div>
+        <h4>LifeTime</h4>
+        <div class="price">200 <span>руб</span></div>
+        <ul class="plist">
+          <li>Доступ навсегда</li>
+          <li>Все будущие обновления</li>
+          <li>Отдельная поддержка</li>
+        </ul>
+        <button class="btn btn-buy" data-buy="life">Купить</button>
+      </div>
+      <div class="product-item">
+        <div class="product-top"><span class="product-badge">Сервис</span></div>
+        <h4>Сброс HWID</h4>
+        <div class="price">10 <span>руб</span></div>
+        <ul class="plist">
+          <li>Сброс привязки железа</li>
+          <li>Мгновенно после оплаты</li>
+          <li>1 сброс = 1 устройство</li>
+        </ul>
+        <button class="btn btn-buy" data-buy="hwid">Сбросить HWID</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section id="profile-view" class="view hidden">
+    <div class="page-head">
+      <h2>Профиль</h2>
+      <p>Награды, промокоды и подписка — всё в одном месте.</p>
+    </div>
+    <div class="card">
+      <div class="profile-header">
+        <div class="avatar-circle">
+          <span id="avatar-letter" class="avatar-letter">R</span>
+        </div>
+        <div class="profile-info">
+          <h3 id="profile-username">Гость</h3>
+          <p class="subscription-status" id="sub-status">Подписка: не активна</p>
+          <p class="sub-expiry" id="sub-expiry"></p>
+          <p class="sub-expiry freeze-line hidden" id="freeze-line"></p>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-secondary btn-sm" id="unfreeze-btn">Отморозить</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="rewards">Ежедневные награды</button>
+        <button class="tab-btn" data-tab="promocodes">Промокоды</button>
+      </div>
+
+      <div class="tab-content">
+        <div class="tab-pane active" id="rewards">
+          <div class="card-inner">
+            <div class="rewards-head">
+              <div>
+                <h4>Выбери карточку</h4>
+                <p class="muted">Содержимое скрыто. Нажми на одну из трёх — она перевернётся. Повтор — раз в 2 дня.</p>
+              </div>
+              <div class="cooldown-pill" id="cooldown-pill">Доступно сейчас</div>
+            </div>
+            <div class="rewards-grid" id="rewards-grid">
+              <div class="flip-card" data-card="0">
+                <div class="flip-inner">
+                  <div class="flip-front"><span class="q">?</span><span class="front-hint">Нажми</span></div>
+                  <div class="flip-back"><div class="rb-title">…</div><div class="rb-desc">…</div></div>
+                </div>
+              </div>
+              <div class="flip-card" data-card="1">
+                <div class="flip-inner">
+                  <div class="flip-front"><span class="q">?</span><span class="front-hint">Нажми</span></div>
+                  <div class="flip-back"><div class="rb-title">…</div><div class="rb-desc">…</div></div>
+                </div>
+              </div>
+              <div class="flip-card" data-card="2">
+                <div class="flip-inner">
+                  <div class="flip-front"><span class="q">?</span><span class="front-hint">Нажми</span></div>
+                  <div class="flip-back"><div class="rb-title">…</div><div class="rb-desc">…</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="reward-result hidden" id="reward-result"></div>
+            <div class="hidden" id="freeze-box">
+              <button class="btn btn-primary" id="freeze-btn">Включить заморозку на 1 день</button>
+              <p class="muted small">Пока заморозка активна — дни и секунды подписки не тратятся.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane hidden" id="promocodes">
+          <div class="card-inner">
+            <h4>Промокоды</h4>
+            <div class="promo-form">
+              <input type="text" id="promo-input" placeholder="Введи промокод" autocomplete="off">
+              <button class="btn btn-primary" id="activate-promo">Активировать</button>
+            </div>
+            <p class="muted small">Тестовый код: <b>rel</b> — подписка на 1 минуту.</p>
+            <div class="my-promos">
+              <h5>Мои промокоды</h5>
+              <div id="promo-list" class="promo-list"><p class="muted small">Пока пусто — выбей промокод в наградах.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LAUNCHER -->
+  <section id="launcher-view" class="view hidden">
+    <div class="page-head">
+      <h2>Скачать лаунчер</h2>
+      <p>Лаунчер скоро выйдет. Оставь профиль готовым.</p>
+    </div>
+    <div class="card launcher-card">
+      <div class="launcher-icon">RL</div>
+      <h3>ReluxeLauncher</h3>
+      <p class="muted">Windows 10 / 11 · ~40 МБ · автообновления</p>
+      <div class="steps">
+        <div class="step"><span>1</span> Зарегистрируйся</div>
+        <div class="step"><span>2</span> Активируй подписку или промокод</div>
+        <div class="step"><span>3</span> Скачай лаунчер, когда выйдет</div>
+      </div>
+      <button class="btn btn-secondary" disabled>Скоро доступно</button>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer class="footer">
+  <span>© 2026 ReluxeClient</span><span class="dot">•</span><span>reluxeclient.fun</span>
+</footer>
+
+<div class="modal hidden" id="auth-modal">
+  <div class="modal-content">
+    <span class="close" id="auth-close">×</span>
+    <h2 id="auth-title">Вход</h2>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-mode="login">Вход</button>
+      <button class="auth-tab" data-mode="register">Регистрация</button>
+    </div>
+    <form id="auth-form">
+      <div class="form-group">
+        <label for="username">Ник</label>
+        <input type="text" id="username" placeholder="Введи ник" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="password">Пароль</label>
+        <input type="password" id="password" placeholder="Введи пароль" required autocomplete="off">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" id="auth-submit">Войти</button>
+    </form>
+    <p class="modal-note">Демо-режим: данные хранятся только в твоём браузере.</p>
+  </div>
+</div>
+
+<div class="notification hidden" id="notification"></div>
+<script src="main.js"></script>
+</body>
+</html>
