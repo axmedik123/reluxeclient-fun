@@ -166,6 +166,7 @@ body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .promo-row button:hover{background:rgba(255,255,255,.18)}
 
 /* launcher */
+.move-box{margin-top:1rem;display:flex;flex-direction:column;gap:.6rem;align-items:flex-start}
 .launcher-card{text-align:center}
 .launcher-icon{width:64px;height:64px;margin:0 auto 1rem;border-radius:1.1rem;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-weight:700;background:linear-gradient(135deg,#3b82f6,#22d3ee);box-shadow:0 15px 50px -15px var(--glow)}
 .steps{display:flex;gap:.6rem;justify-content:center;margin:1.2rem 0;flex-wrap:wrap}
